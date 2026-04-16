@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body class="bg-light">
+
+<div th:replace="fragments/navbar :: navbar"></div>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Dashboard</h2>
+        <div>
+            <a class="btn btn-primary me-2" th:href="@{/sales}">Sell Product</a>
+            <a class="btn btn-secondary" th:href="@{/sales/history}">View Sales History</a>
+        </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="row g-3">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title">Total Products</h6>
+                    <p class="display-6 mb-0" th:text="${totalProducts} ?: 0"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title">Total Items Sold</h6>
+                    <p class="display-6 mb-0" th:text="${totalSales} ?: 0"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title">Total Revenue (MAD)</h6>
+                    <p class="display-6 mb-0"
+                       th:text="${#numbers.formatDecimal(totalRevenue ?: 0, 0, 'COMMA', 2, 'POINT')}"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title">Today's Revenue (MAD)</h6>
+                    <p class="display-6 mb-0"
+                       th:text="${#numbers.formatDecimal(todayRevenue ?: 0, 0, 'COMMA', 2, 'POINT')}"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-4"/>
+
+    <!-- Top sellers + low stock -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <strong>Top Selling Products (Summary)</strong>
+                    <a class="btn btn-sm btn-outline-secondary float-end" th:href="@{/sales/history}">Full history</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Product</th>
+                            <th class="text-end">Qty Sold</th>
+                            <th class="text-end">Revenue (MAD)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="row : ${salesSummary}">
+                            <td th:text="${row[0]}">Product name</td>
+                            <td class="text-end" th:text="${row[1]}">0</td>
+                            <td class="text-end"
+                                th:text="${#numbers.formatDecimal(row[2] ?: 0, 0, 'COMMA', 2, 'POINT')}">0.00</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(salesSummary)}">
+                            <td colspan="3" class="text-center py-3">No sales summary available</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header"><strong>Low Stock Alerts</strong></div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center"
+                            th:each="p : ${lowStock}">
+                            <span th:text="${p.name}">Product</span>
+                            <span class="badge bg-danger rounded-pill" th:text="${p.stock}">0</span>
+                        </li>
+                        <li class="list-group-item text-center" th:if="${#lists.isEmpty(lowStock)}">No low stock items</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-4"/>
+
+    <!-- Today's sales -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header"><strong>Today's Sales</strong></div>
+                <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th class="text-end">Qty</th>
+                            <th class="text-end">Total (MAD)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="s : ${daySales}">
+                            <td th:text="${s.saleDate != null ? #temporals.format(s.saleDate, 'yyyy-MM-dd HH:mm') : ''}"></td>
+                            <td th:text="${s.product != null ? s.product.name : 'Unknown'}"></td>
+                            <td class="text-end" th:text="${s.quantity}">0</td>
+                            <td class="text-end"
+                                th:text="${#numbers.formatDecimal(s.totalPrice ?: 0, 0, 'COMMA', 2, 'POINT')}">0.00</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(daySales)}">
+                            <td colspan="4" class="text-center py-3">No sales today</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header"><strong>Quick Actions</strong></div>
+                <div class="card-body">
+                    <a class="btn btn-success w-100 mb-2" th:href="@{/sales}">Sell Product</a>
+                    <a class="btn btn-outline-primary w-100 mb-2" th:href="@{/sales/history}">Sales History</a>
+                    <a class="btn btn-outline-secondary w-100" th:href="@{/reports}">Reports & Export</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
